@@ -2,7 +2,9 @@
 # Launch two ArduPlane SITL instances in a single console (background processes).
 #   hunter_plane  - SYSID 51 - instance 0 - TCP 5760
 #   target_plane  - SYSID 52 - instance 1 - TCP 5770
-# Both output to the same UDP port 14550 — GCS differentiates by SYSID.
+# SITL instances use private debug ports (14551/14561) — use launch_mavproxy.sh
+# which forwards both vehicles cleanly to QGC via UDP 14550 (hunter+target mixed,
+# distinguished by SYSID) and UDP 14560 as an alternative output.
 #
 # Press Ctrl+C to stop both instances.
 
@@ -25,8 +27,7 @@ echo "[launch] Starting target_plane (SYSID 52, instance 1)..."
 "$SCRIPT_DIR/launch_target.sh" &
 PID_TARGET=$!
 
-echo "[launch] Both instances running. Waiting 20s for SITL to initialise before uploading mission..."
-(sleep 20 && "$SCRIPT_DIR/upload_mission.sh") &
+echo "[launch] Both instances running. Start mavproxy (launch_mavproxy.sh both), then run upload_mission.sh."
 
 echo "[launch] Press Ctrl+C to stop."
 wait "$PID_HUNTER" "$PID_TARGET"
