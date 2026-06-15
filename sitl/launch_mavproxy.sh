@@ -9,25 +9,34 @@
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
-source /home/postiau/venv-ardupilot/bin/activate
+source "$HOME/venv-ardupilot/bin/activate"
+
+# Detect WSL2: if so, forward to the Windows host; otherwise use localhost.
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    GCS_IP=$(ip route show default | awk '{print $3}')
+    echo "[mavproxy] WSL2 detected — forwarding to Windows host at $GCS_IP"
+else
+    GCS_IP=127.0.0.1
+    echo "[mavproxy] Native Linux — forwarding to $GCS_IP"
+fi
 
 case "${1:-both}" in
     hunter)
         mavproxy.py \
             --master=tcp:127.0.0.1:5760 \
-            --out=udp:127.0.0.1:14550
+            --out=udp:"$GCS_IP":14550
         ;;
     target)
         mavproxy.py \
             --master=tcp:127.0.0.1:5770 \
-            --out=udp:127.0.0.1:14550
+            --out=udp:"$GCS_IP":14550
         ;;
     both|*)
         mavproxy.py \
             --master=tcp:127.0.0.1:5760 \
             --master=tcp:127.0.0.1:5770 \
-            --out=udp:127.0.0.1:14550 \
-            --out=udp:127.0.0.1:14560 \
+            --out=udp:"$GCS_IP":14550 \
+            --out=udp:"$GCS_IP":14560 \
             --out=udpin:0.0.0.0:14577
         ;;
 esac

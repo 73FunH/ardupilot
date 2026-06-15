@@ -5,6 +5,6 @@
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
-source /home/postiau/venv-ardupilot/bin/activate
+source "$HOME/venv-ardupilot/bin/activate"
 
 python3 sitl/upload_mission.py

@@ -6,7 +6,7 @@
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
-source /home/postiau/venv-ardupilot/bin/activate
+source "$HOME/venv-ardupilot/bin/activate"
 
 ./Tools/autotest/sim_vehicle.py \
     -v ArduPlane -I 0 \
