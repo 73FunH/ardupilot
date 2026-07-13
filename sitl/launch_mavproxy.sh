@@ -3,9 +3,9 @@
 # Run AFTER both SITL instances are up.
 #
 # Usage:
-#   ./sitl/launch_mavproxy.sh            → connect to both planes
-#   ./sitl/launch_mavproxy.sh hunter     → hunter_plane only (TCP 5760)
-#   ./sitl/launch_mavproxy.sh target     → target_plane only (TCP 5770)
+#   ./sitl/launch_mavproxy.sh            → connect to both planes/copters
+#   ./sitl/launch_mavproxy.sh hunter     → hunter vehicle only (TCP 5760)
+#   ./sitl/launch_mavproxy.sh target     → target vehicle only (TCP 5770)
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"

@@ -3,9 +3,10 @@
 # named screen window so you can inspect its output at any time.
 #
 # Windows created:
-#   sitl      — both ArduPlane instances (hunter + target)
+#   sitl      — both SITL instances (vehicle types set by HUNTER_TYPE / TARGET_TYPE)
 #   mavproxy  — MAVProxy bridge console
 #
+# To change vehicle types, edit HUNTER_TYPE / TARGET_TYPE below.
 # To change the mission, edit the MISSION variable in upload_mission.sh.
 #
 # Usage:
@@ -19,6 +20,15 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SESSION="sitl_sim"
+
+# ============================================================
+# Simulation configuration — edit here, no arguments needed.
+# Supported values: plane | copter
+# Any combination is valid (e.g. hunter=plane, target=copter).
+# ============================================================
+HUNTER_TYPE=copter   # plane | copter
+TARGET_TYPE=copter   # plane | copter
+# ============================================================
 
 # ----- helpers ---------------------------------------------------------------
 
@@ -71,14 +81,27 @@ sleep 0.5
 
 # ----- step 1: SITL in its own screen window ---------------------------------
 
-echo "[start_sim] Step 1 — launching SITL in screen window 'sitl'..."
-screen -dmS "$SESSION" -t sitl bash -c "$SCRIPT_DIR/launch_dual_plane.sh; exec bash"
+echo "[start_sim] Step 1 — launching SITL in screen window 'sitl' (hunter=${HUNTER_TYPE}, target=${TARGET_TYPE})..."
+screen -dmS "$SESSION" -t sitl bash -c "
+    \"$SCRIPT_DIR/launch_hunter_${HUNTER_TYPE}.sh\" &
+    HUNTER_PID=\$!
+    \"$SCRIPT_DIR/launch_target_${TARGET_TYPE}.sh\" &
+    TARGET_PID=\$!
+    wait \$HUNTER_PID \$TARGET_PID
+    exec bash
+"
 
-wait_tcp 127.0.0.1 5760 "hunter_plane (SYSID 51)"
-wait_tcp 127.0.0.1 5770 "target_plane (SYSID 52)"
+wait_tcp 127.0.0.1 5760 "hunter (SYSID 51, ${HUNTER_TYPE})"
+wait_tcp 127.0.0.1 5770 "target (SYSID 52, ${TARGET_TYPE})"
 
-echo "[start_sim] Letting SITL finish boot (5 s)..."
-sleep 5
+# Copters need longer EKF + storage initialization than planes.
+if [[ "$HUNTER_TYPE" == "copter" || "$TARGET_TYPE" == "copter" ]]; then
+    BOOT_WAIT=15
+else
+    BOOT_WAIT=5
+fi
+echo "[start_sim] Letting SITL finish boot (${BOOT_WAIT}s)..."
+sleep $BOOT_WAIT
 
 # ----- step 2: MAVProxy in its own screen window -----------------------------
 
@@ -89,8 +112,8 @@ wait_udp 14577 "MAVProxy udpin"
 
 # ----- step 3: upload mission (runs inline, exits when done) -----------------
 
-echo "[start_sim] Step 3 — uploading mission..."
-"$SCRIPT_DIR/upload_mission.sh"
+echo "[start_sim] Step 3 — uploading mission for target_${TARGET_TYPE}..."
+"$SCRIPT_DIR/upload_mission.sh" "$TARGET_TYPE"
 
 # ----- step 4: QGroundControl ------------------------------------------------
 

@@ -164,13 +164,18 @@ def main():
     print(f"[upload_mission] {len(wps)} waypoints from {mission}")
     print("[upload_mission] Uploading to SYSID 52 via udp:14577...")
 
-    ok = upload('udpout:127.0.0.1:14577', 52, wps)
-    if ok:
-        print("[upload_mission] SUCCESS — mission accepted by vehicle.")
-        sys.exit(0)
-    else:
-        print("[upload_mission] FAILED — mission was not accepted by vehicle.")
-        sys.exit(1)
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        ok = upload('udpout:127.0.0.1:14577', 52, wps)
+        if ok:
+            print("[upload_mission] SUCCESS — mission accepted by vehicle.")
+            sys.exit(0)
+        if attempt < max_retries:
+            print(f"[upload_mission] Retrying in 5 s... (attempt {attempt}/{max_retries})")
+            time.sleep(5)
+
+    print("[upload_mission] FAILED — mission was not accepted after all retries.")
+    sys.exit(1)
 
 
 if __name__ == '__main__':
