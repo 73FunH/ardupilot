@@ -15,4 +15,4 @@ source "$HOME/venv-ardupilot/bin/activate"
     --aircraft=sitl/target_copter \
     --add-param-file=sitl/target_copter/target_copter.parm \
     --out=udp:127.0.0.1:14561 \
-    -l 50.62391126136441,5.217642001585023,0,0
+    -l 50.62371126136441,5.217642001585023,0,0
