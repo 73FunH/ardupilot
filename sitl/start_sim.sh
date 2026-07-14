@@ -6,12 +6,12 @@
 #   sitl      — both SITL instances (vehicle types set by HUNTER_TYPE / TARGET_TYPE)
 #   mavproxy  — MAVProxy bridge console
 #
-# To change vehicle types, edit HUNTER_TYPE / TARGET_TYPE below.
-# To change the mission, edit the MISSION variable in upload_mission.sh.
-#
 # Usage:
-#   ./sitl/start_sim.sh           — launch everything, Ctrl+C to stop all
-#   ./sitl/start_sim.sh --attach  — launch and attach to screen session
+#   ./sitl/start_sim.sh                          — launch with defaults
+#   ./sitl/start_sim.sh --attach                 — launch and attach to screen session
+#   ./sitl/start_sim.sh -H copter -T plane       — override vehicle types
+#   ./sitl/start_sim.sh --hunter=copter --target=plane
+#   ./sitl/start_sim.sh -h | --help              — show this help
 #
 # Re-attach later : screen -r sitl_sim
 # Switch window   : Ctrl+A then "  (list) or Ctrl+A N / Ctrl+A P
@@ -22,13 +22,62 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SESSION="sitl_sim"
 
 # ============================================================
-# Simulation configuration — edit here, no arguments needed.
+# Simulation defaults — overridable via -H / -T arguments.
 # Supported values: plane | copter
-# Any combination is valid (e.g. hunter=plane, target=copter).
 # ============================================================
 HUNTER_TYPE=copter   # plane | copter
 TARGET_TYPE=copter   # plane | copter
+ATTACH=false
 # ============================================================
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Options:
+  -H, --hunter=TYPE   Hunter vehicle type: plane | copter  (default: ${HUNTER_TYPE})
+  -T, --target=TYPE   Target vehicle type: plane | copter  (default: ${TARGET_TYPE})
+      --attach        Attach to the screen session after launch
+  -h, --help          Show this help and exit
+
+Examples:
+  $(basename "$0")                         # both copter (defaults)
+  $(basename "$0") -H plane -T copter      # hunter=plane, target=copter
+  $(basename "$0") --hunter=plane --target=copter --attach
+EOF
+}
+
+validate_type() {
+    local val=$1 opt=$2
+    if [[ "$val" != "plane" && "$val" != "copter" ]]; then
+        echo "ERROR: $opt must be 'plane' or 'copter', got: '$val'" >&2
+        exit 1
+    fi
+}
+
+# ----- argument parsing ------------------------------------------------------
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            usage; exit 0 ;;
+        -H)
+            HUNTER_TYPE="$2"; validate_type "$HUNTER_TYPE" "-H"; shift 2 ;;
+        --hunter)
+            HUNTER_TYPE="$2"; validate_type "$HUNTER_TYPE" "--hunter"; shift 2 ;;
+        --hunter=*)
+            HUNTER_TYPE="${1#--hunter=}"; validate_type "$HUNTER_TYPE" "--hunter"; shift ;;
+        -T)
+            TARGET_TYPE="$2"; validate_type "$TARGET_TYPE" "-T"; shift 2 ;;
+        --target)
+            TARGET_TYPE="$2"; validate_type "$TARGET_TYPE" "--target"; shift 2 ;;
+        --target=*)
+            TARGET_TYPE="${1#--target=}"; validate_type "$TARGET_TYPE" "--target"; shift ;;
+        --attach)
+            ATTACH=true; shift ;;
+        *)
+            echo "ERROR: unknown option '$1'" >&2; usage >&2; exit 1 ;;
+    esac
+done
 
 # ----- helpers ---------------------------------------------------------------
 
@@ -130,7 +179,7 @@ echo "  Detach    : Ctrl+A D  (keeps sim running)"
 echo "  Stop all  : Ctrl+C here"
 echo ""
 
-if [[ "${1:-}" == "--attach" ]]; then
+if [[ "$ATTACH" == true ]]; then
     # Attach — Ctrl+C inside screen goes to the inner process, not here.
     # To stop everything from inside: detach with Ctrl+A D, then Ctrl+C here.
     screen -r "$SESSION"
