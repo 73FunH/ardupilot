@@ -128,13 +128,19 @@ fi
 screen -S "$SESSION" -X quit 2>/dev/null
 sleep 0.5
 
+# ----- resolve launch script names (plane scripts have no _plane suffix) -----
+# hunter: launch_hunter_copter.sh  OR  launch_hunter.sh (plane)
+# target: launch_target_copter.sh  OR  launch_target.sh (plane)
+declare -A HUNTER_LAUNCH=([copter]="launch_hunter_copter.sh" [plane]="launch_hunter.sh")
+declare -A TARGET_LAUNCH=([copter]="launch_target_copter.sh" [plane]="launch_target.sh")
+
 # ----- step 1: SITL in its own screen window ---------------------------------
 
 echo "[start_sim] Step 1 — launching SITL in screen window 'sitl' (hunter=${HUNTER_TYPE}, target=${TARGET_TYPE})..."
 screen -dmS "$SESSION" -t sitl bash -c "
-    \"$SCRIPT_DIR/launch_hunter_${HUNTER_TYPE}.sh\" &
+    \"$SCRIPT_DIR/${HUNTER_LAUNCH[$HUNTER_TYPE]}\" &
     HUNTER_PID=\$!
-    \"$SCRIPT_DIR/launch_target_${TARGET_TYPE}.sh\" &
+    \"$SCRIPT_DIR/${TARGET_LAUNCH[$TARGET_TYPE]}\" &
     TARGET_PID=\$!
     wait \$HUNTER_PID \$TARGET_PID
     exec bash
