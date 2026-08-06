@@ -92,6 +92,7 @@ logs/
 mav.log
 mav.log.raw
 mav.parm
+mav_*.parm
 mission.stg
 sitl/vehicle_*.parm
 /defaults.parm
