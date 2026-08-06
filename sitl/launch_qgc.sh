@@ -19,4 +19,4 @@ echo "[qgc] Launching QGroundControl from $QGC_EXEC"
 chmod +x "$QGC_EXEC"
 
 # Launch QGC
-"$QGC_EXEC" &
+"$QGC_EXEC"

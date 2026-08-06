@@ -3,8 +3,10 @@
 # named screen window so you can inspect its output at any time.
 #
 # Windows created:
-#   sitl      — both SITL instances (vehicle types set by HUNTER_TYPE / TARGET_TYPE)
+#   hunter    — hunter SITL instance (vehicle type set by HUNTER_TYPE)
+#   target    — target SITL instance (vehicle type set by TARGET_TYPE)
 #   mavproxy  — MAVProxy bridge console
+#   qgc       — QGroundControl
 #
 # Usage:
 #   ./sitl/start_sim.sh                          — launch with defaults
@@ -25,8 +27,8 @@ SESSION="sitl_sim"
 # Simulation defaults — overridable via -H / -T arguments.
 # Supported values: plane | copter
 # ============================================================
-HUNTER_TYPE=copter   # plane | copter
-TARGET_TYPE=copter   # plane | copter
+HUNTER_TYPE=plane   # plane | copter
+TARGET_TYPE=plane   # plane | copter
 ATTACH=false
 # ============================================================
 
@@ -41,7 +43,7 @@ Options:
   -h, --help          Show this help and exit
 
 Examples:
-  $(basename "$0")                         # both copter (defaults)
+  $(basename "$0")                         # both plane (defaults)
   $(basename "$0") -H plane -T copter      # hunter=plane, target=copter
   $(basename "$0") --hunter=plane --target=copter --attach
 EOF
@@ -136,15 +138,9 @@ declare -A TARGET_LAUNCH=([copter]="launch_target_copter.sh" [plane]="launch_tar
 
 # ----- step 1: SITL in its own screen window ---------------------------------
 
-echo "[start_sim] Step 1 — launching SITL in screen window 'sitl' (hunter=${HUNTER_TYPE}, target=${TARGET_TYPE})..."
-screen -dmS "$SESSION" -t sitl bash -c "
-    \"$SCRIPT_DIR/${HUNTER_LAUNCH[$HUNTER_TYPE]}\" &
-    HUNTER_PID=\$!
-    \"$SCRIPT_DIR/${TARGET_LAUNCH[$TARGET_TYPE]}\" &
-    TARGET_PID=\$!
-    wait \$HUNTER_PID \$TARGET_PID
-    exec bash
-"
+echo "[start_sim] Step 1 — launching SITL in screen windows 'hunter' and 'target' (hunter=${HUNTER_TYPE}, target=${TARGET_TYPE})..."
+screen -dmS "$SESSION" -t hunter bash -c "\"$SCRIPT_DIR/${HUNTER_LAUNCH[$HUNTER_TYPE]}\"; exec bash"
+screen -S "$SESSION" -X screen -t target bash -c "\"$SCRIPT_DIR/${TARGET_LAUNCH[$TARGET_TYPE]}\"; exec bash"
 
 wait_tcp 127.0.0.1 5760 "hunter (SYSID 51, ${HUNTER_TYPE})"
 wait_tcp 127.0.0.1 5770 "target (SYSID 52, ${TARGET_TYPE})"
@@ -172,8 +168,8 @@ echo "[start_sim] Step 3 — uploading mission for target_${TARGET_TYPE}..."
 
 # ----- step 4: QGroundControl ------------------------------------------------
 
-echo "[start_sim] Step 4 — launching QGroundControl..."
-"$SCRIPT_DIR/launch_qgc.sh"
+echo "[start_sim] Step 4 — launching QGroundControl in screen window 'qgc'..."
+screen -S "$SESSION" -X screen -t qgc bash -c "$SCRIPT_DIR/launch_qgc.sh; exec bash"
 
 # ----- step 5: attach or wait ------------------------------------------------
 
