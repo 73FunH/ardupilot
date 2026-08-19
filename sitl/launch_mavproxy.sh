@@ -1,11 +1,10 @@
 #!/bin/bash
-# Connect MAVProxy to both SITL instances.
-# Run AFTER both SITL instances are up.
+# Forward all SITL vehicles to QGC.
 #
-# Usage:
-#   ./sitl/launch_mavproxy.sh            → connect to both planes/copters
-#   ./sitl/launch_mavproxy.sh hunter     → hunter vehicle only (TCP 5760)
-#   ./sitl/launch_mavproxy.sh target     → target vehicle only (TCP 5770)
+# Usage: ./sitl/launch_mavproxy.sh
+#   Listens on shared UDP port 14540 for incoming MAVLink from any SITL vehicle
+#   launched via launch_vehicle.sh, and forwards to QGC on UDP 14550.
+#   Vehicles started at any time are picked up automatically — no restart needed.
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
@@ -20,23 +19,9 @@ else
     echo "[mavproxy] Native Linux — forwarding to $GCS_IP"
 fi
 
-case "${1:-both}" in
-    hunter)
-        mavproxy.py \
-            --master=tcp:127.0.0.1:5760 \
-            --out=udp:"$GCS_IP":14550
-        ;;
-    target)
-        mavproxy.py \
-            --master=tcp:127.0.0.1:5770 \
-            --out=udp:"$GCS_IP":14550
-        ;;
-    both|*)
-        mavproxy.py \
-            --master=tcp:127.0.0.1:5760 \
-            --master=tcp:127.0.0.1:5770 \
-            --out=udp:"$GCS_IP":14550 \
-            --out=udp:"$GCS_IP":14560 \
-            --out=udpin:0.0.0.0:14577
-        ;;
-esac
+echo "[mavproxy] Listening on UDP 14540 → QGC at $GCS_IP:14550/14560  (mission inject: 14577)"
+mavproxy.py \
+    --master=udpin:0.0.0.0:14540 \
+    --out=udp:"$GCS_IP":14550 \
+    --out=udp:"$GCS_IP":14560 \
+    --out=udpin:0.0.0.0:14577

@@ -1,34 +1,30 @@
 #!/bin/bash
-# Upload a mission to the target vehicle via MAVLink (pymavlink direct).
-# Requires mavproxy bridge to be running (launch_mavproxy.sh).
+# Upload a mission to a SITL vehicle via MAVProxy (port 14577).
+# Requires launch_mavproxy.sh to be running.
 #
 # Usage:
-#   ./sitl/upload_mission.sh              # defaults to plane
-#   ./sitl/upload_mission.sh plane        # explicit type
-#   ./sitl/upload_mission.sh copter       # copter mission
-#   ./sitl/upload_mission.sh path/to/file.waypoints  # explicit file path
-
-# --- Mission file selection ---
-MISSION_PLANE="sitl/target_plane/mission_double_rect.waypoints"
-MISSION_COPTER="sitl/target_copter/mission_double_rect_bow.waypoints"
-# -----------------------------
-
-TARGET="${1:-plane}"
+#   ./sitl/upload_mission.sh                        # open GUI selector, then upload
+#   ./sitl/upload_mission.sh <sysid>                # GUI pre-filled with sysid
+#   ./sitl/upload_mission.sh <sysid> <mission_file> # direct upload, no GUI
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
 source "$HOME/venv-ardupilot/bin/activate"
 
-# If the argument is an existing file, use it directly; otherwise select by type.
-if [[ -f "$TARGET" ]]; then
-    MISSION="$TARGET"
-elif [[ "$TARGET" == "copter" ]]; then
-    MISSION="$MISSION_COPTER"
-elif [[ "$TARGET" == "plane" ]]; then
-    MISSION="$MISSION_PLANE"
-else
-    echo "Unknown vehicle type '$TARGET'. Use 'plane', 'copter', or a file path." >&2
-    exit 1
+if [[ $# -eq 2 ]]; then
+    # Both sysid and file provided — skip GUI
+    python3 sitl/upload_mission.py --sysid "$1" "$2"
+    exit $?
 fi
 
-python3 sitl/upload_mission.py "$MISSION"
+# Open GUI selector; on OK it prints "<sysid> <mission_path>" to stdout
+SELECTION=$(python3 sitl/select_mission.py "$@")
+if [[ -z "$SELECTION" ]]; then
+    echo "[upload] Cancelled."
+    exit 0
+fi
+
+SYSID=$(echo "$SELECTION" | awk '{print $1}')
+MISSION=$(echo "$SELECTION" | awk '{print $2}')
+echo "[upload] SYSID=$SYSID  mission=$(basename "$MISSION")"
+python3 sitl/upload_mission.py --sysid "$SYSID" "$MISSION"

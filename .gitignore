@@ -95,6 +95,7 @@ mav.parm
 mav_*.parm
 mission.stg
 sitl/vehicle_*.parm
+sitl/vehicles/
 /defaults.parm
 /ArduCopter/defaults.parm
 /ArduPlane/defaults.parm

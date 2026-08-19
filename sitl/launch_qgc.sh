@@ -15,8 +15,8 @@ fi
 
 echo "[qgc] Launching QGroundControl from $QGC_EXEC"
 
-# Make sure it's executable
 chmod +x "$QGC_EXEC"
 
-# Launch QGC
-"$QGC_EXEC"
+nohup "$QGC_EXEC" > /tmp/qgc.log 2>&1 &
+disown $!
+echo "[qgc] Started (PID $!) — terminal is free. Log: /tmp/qgc.log"

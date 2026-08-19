@@ -143,6 +143,8 @@ def main():
                         help="Path to .waypoints file (skips dialog if provided).")
     parser.add_argument('--headless', action='store_true',
                         help="Skip file dialog and use the default mission file.")
+    parser.add_argument('--sysid', type=int, default=None,
+                        help="Target vehicle SYSID (required when mission dir has no .parm file).")
     args = parser.parse_args()
 
     if args.mission:
@@ -162,11 +164,16 @@ def main():
 
     wps = load_waypoints(mission)
     print(f"[upload_mission] {len(wps)} waypoints from {mission}")
-    print("[upload_mission] Uploading to SYSID 52 via udp:14577...")
+
+    if args.sysid is not None:
+        target_sysid = args.sysid
+    else:
+        target_sysid = 52  # legacy default
+    print(f"[upload_mission] Uploading to SYSID {target_sysid} via udp:14577...")
 
     max_retries = 3
     for attempt in range(1, max_retries + 1):
-        ok = upload('udpout:127.0.0.1:14577', 52, wps)
+        ok = upload('udpout:127.0.0.1:14577', target_sysid, wps)
         if ok:
             print("[upload_mission] SUCCESS — mission accepted by vehicle.")
             sys.exit(0)
