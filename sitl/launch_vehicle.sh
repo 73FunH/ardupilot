@@ -79,7 +79,17 @@ declare -a LON_TABLE=(
 
 LAT="${LAT_TABLE[$INSTANCE]}"
 LON="${LON_TABLE[$INSTANCE]}"
-ALT=$([[ "$TYPE" == "plane" ]] && echo "100" || echo "0")
+
+# Home altitude: look up real terrain elevation (SRTM) once at a fixed
+# reference point (spawn 0) and reuse it for every vehicle/instance, so all
+# home points agree exactly — the site is flat, and per-instance lookups
+# only add SRTM interpolation noise between adjacent grid posts.
+# Falls back to 100m AMSL (roughly this area's elevation) if the lookup fails.
+ALT="$(python3 "$REPO/sitl/terrain_alt.py" "${LAT_TABLE[0]}" "${LON_TABLE[0]}" 2>/dev/null)"
+if [[ -z "$ALT" ]]; then
+    echo "[launch_vehicle] WARNING: terrain lookup failed, falling back to ALT=100"
+    ALT=100
+fi
 
 # ── ArduPilot vehicle class ──────────────────────────────────────────────────
 VEHICLE=$([[ "$TYPE" == "plane" ]] && echo "ArduPlane" || echo "ArduCopter")
