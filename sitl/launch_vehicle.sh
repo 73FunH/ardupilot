@@ -1,9 +1,10 @@
 #!/bin/bash
 # Launch a SITL vehicle with auto-assigned instance.
 #
-# Usage: launch_vehicle.sh <type> <sysid>
-#   type : plane | copter
-#   sysid: MAV_SYSID value (any positive integer, e.g. 51, 52, 44)
+# Usage: launch_vehicle.sh <type> <sysid> [param_file]
+#   type       : plane | copter
+#   sysid      : MAV_SYSID value (any positive integer, e.g. 51, 52, 44)
+#   param_file : optional extra --add-param-file (role-specific tuning, e.g. hunter_plane.parm)
 #
 # Each vehicle's serial0 is configured to push MAVLink to shared UDP port 14540.
 # MAVProxy listens on that port (udpin) and forwards to QGC on UDP 14550.
@@ -18,6 +19,7 @@ source "$HOME/venv-ardupilot/bin/activate"
 # ── argument validation ──────────────────────────────────────────────────────
 TYPE="${1:-}"
 SYSID="${2:-}"
+PARAM_FILE="${3:-}"
 
 if [[ "$TYPE" != "plane" && "$TYPE" != "copter" ]]; then
     echo "Usage: $0 <plane|copter> <sysid>"
@@ -96,6 +98,13 @@ echo "[launch_vehicle] type=$TYPE  sysid=$SYSID  instance=$INSTANCE  → UDP $SH
 echo "[launch_vehicle] spawn: lat=$LAT lon=$LON alt=${ALT}m"
 echo "[launch_vehicle] log: $LOG"
 
+# Role-specific tuning file (e.g. hunter_plane.parm) is applied after the
+# generic type defaults so it can override them; it may repeat MAV_SYSID.
+EXTRA_PARAM_ARGS=()
+if [[ -n "$PARAM_FILE" ]]; then
+    EXTRA_PARAM_ARGS=(--add-param-file="$PARAM_FILE")
+fi
+
 nohup ./Tools/autotest/sim_vehicle.py \
     -v "$VEHICLE" \
     -I "$INSTANCE" \
@@ -103,6 +112,7 @@ nohup ./Tools/autotest/sim_vehicle.py \
     --no-mavproxy \
     --aircraft="sitl/vehicles/$SYSID" \
     --add-param-file="sitl/$TYPE.parm" \
+    "${EXTRA_PARAM_ARGS[@]}" \
     --add-param-file="$WORKDIR/sysid.parm" \
     -A "--serial0" -A "udpclient:127.0.0.1:$SHARED_UDP" \
     -l "$LAT,$LON,$ALT,0" \

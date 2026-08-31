@@ -1,5 +1,5 @@
 #!/bin/bash
-# Launch hunter_copter SITL only (SYSID 51, instance 0)
+# Launch hunter_copter SITL only (SYSID 41, instance 0)
 #   TCP MAVLink : 5760
 #   UDP direct  : 14551 (direct QGC without mavproxy, debug only)
 #   UDP GCS out : 14550 via launch_mavproxy.sh both_copter (normal workflow)
