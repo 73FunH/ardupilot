@@ -188,7 +188,7 @@ sleep 0.5
 
 # ----- step 1: SITL — one screen window per selected token -------------------
 # Each vehicle is launched via launch_vehicle.sh, which auto-assigns a free
-# instance/TCP port and bridges MAVLink through the shared UDP 14540 port —
+# instance/TCP port and bridges MAVLink through the shared UDP 14550 port —
 # this is what allows any number/combination of hunters and targets at once.
 
 echo "[start_sim] Step 1 — launching SITL for: ${TOKENS[*]} ..."

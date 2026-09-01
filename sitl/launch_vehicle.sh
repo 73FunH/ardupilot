@@ -6,8 +6,8 @@
 #   sysid      : MAV_SYSID value (any positive integer, e.g. 51, 52, 44)
 #   param_file : optional extra --add-param-file (role-specific tuning, e.g. hunter_plane.parm)
 #
-# Each vehicle's serial0 is configured to push MAVLink to shared UDP port 14540.
-# MAVProxy listens on that port (udpin) and forwards to QGC on UDP 14550.
+# Each vehicle's serial0 is configured to push MAVLink to shared UDP port 14550.
+# MAVProxy listens on that port (udpin) and forwards to QGC on UDP 14551.
 # Vehicles launched at any time are picked up automatically — no MAVProxy restart needed.
 #
 # Start MAVProxy once: ./sitl/launch_mavproxy.sh
@@ -55,7 +55,7 @@ if [[ $INSTANCE -eq -1 ]]; then
     exit 1
 fi
 
-SHARED_UDP=14540
+SHARED_UDP=14550
 
 # ── spawn position indexed by instance ──────────────────────────────────────
 # Even instances cluster slightly south, odd slightly north (~20 m apart).

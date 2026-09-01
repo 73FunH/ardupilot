@@ -2,8 +2,8 @@
 # Forward all SITL vehicles to QGC.
 #
 # Usage: ./sitl/launch_mavproxy.sh
-#   Listens on shared UDP port 14540 for incoming MAVLink from any SITL vehicle
-#   launched via launch_vehicle.sh, and forwards to QGC on UDP 14550.
+#   Listens on shared UDP port 14550 for incoming MAVLink from SITL or field
+#   vehicles, and forwards to QGC on UDP 14551.
 #   Vehicles started at any time are picked up automatically — no restart needed.
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,9 +19,9 @@ else
     echo "[mavproxy] Native Linux — forwarding to $GCS_IP"
 fi
 
-echo "[mavproxy] Listening on UDP 14540 → QGC at $GCS_IP:14550/14560  (mission inject: 14577)"
+echo "[mavproxy] Listening on UDP 14550 → QGC at $GCS_IP:14551/14560  (mission inject: 14577)"
 mavproxy.py \
-    --master=udpin:0.0.0.0:14540 \
-    --out=udp:"$GCS_IP":14550 \
+    --master=udpin:0.0.0.0:14550 \
+    --out=udp:"$GCS_IP":14551 \
     --out=udp:"$GCS_IP":14560 \
     --out=udpin:0.0.0.0:14577
